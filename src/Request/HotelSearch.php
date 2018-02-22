@@ -4,9 +4,7 @@ namespace GoGlobal\Request;
 
 use DateTime;
 use GoGlobal\Exception;
-//use GoGlobal\Service;
 use GoGlobal\Helper;
-//use GoGlobal\Enum\Room as RoomEnum;
 use GoGlobal\Enum\Sort as SortEnum;
 use GoGlobal\Enum\Category as CategoryEnum;
 use GoGlobal\RequestAbstract;
@@ -15,191 +13,283 @@ use GoGlobal\Room;
 
 class HotelSearch extends RequestAbstract implements RequestInterface
 {
+    static function getOperation()
+    {
+        return 'HOTEL_SEARCH_REQUEST';
+    }
 
-	static function getOperation() {
-		return 'HOTEL_SEARCH_REQUEST';
-	}
+    static function getRequestType()
+    {
+        return 1;
+    }
 
-	static function getRequestType() {
-		return 1;
-	}
-
-	protected $_sort = SortEnum::PRICE_ASC;
-	protected $_city = 0;
-	protected $_hotelCode = null;
-	protected $_dateFrom = null;
-	protected $_nights = null;
-	protected $_dateUntil = null;
-	protected $_categories = [];
-	protected $_rooms = [];
-	protected $_apartments = 'false';
+    protected $_sort = SortEnum::PRICE_ASC;
+    protected $_city = 0;
+    protected $_hotelCode = null;
+    protected $_dateFrom = null;
+    protected $_nights = null;
+    protected $_dateUntil = null;
+    protected $_categories = [];
+    protected $_rooms = [];
+    protected $_apartments = 'false';
 
 
-	public function setSort($sort) {
-		$this->_sort = $sort;
-		return $this;
-	}
+    public function setSort($sort)
+    {
+        $this->_sort = $sort;
 
-	public function getSort() {
-		return $this->_sort;
-	}
+        return $this;
+    }
 
-	public function setCity($city) {
-		$this->_city = intval($city);
-		return $this;
-	}
+    public function getSort()
+    {
+        return $this->_sort;
+    }
 
-	public function getCity() {
-		return $this->_city;
-	}
+    public function setCity($city)
+    {
+        $this->_city = intval($city);
 
-	public function setDateFrom($date) {
-		$this->_dateFrom = $date;
-		if($this->_nights) {
-			$this->_dateUntil = date('Y-m-d',strtotime($this->_dateFrom.' +'.$this->_nights.' days'));
-		}
-		return $this;
-	}
+        return $this;
+    }
 
-	public function getDateFrom() {
-		return $this->_dateFrom;
-	}
+    public function getCity()
+    {
+        return $this->_city;
+    }
 
-	public function setDateUntil($date) {
-		if(!$this->_dateFrom) throw new Exception("Arrival date must be set when using departure date!");
-		$this->_dateUntil = $date;
-		$d1 = new DateTime($this->_dateFrom);
-		$d2 = new DateTime($this->_dateUntil);
-		$d = $d1->diff($d2);
-		$this->setNights(abs($d->days));
-		return $this;
-	}
+    public function setDateFrom($date)
+    {
+        $this->_dateFrom = $date;
+        if ($this->_nights) {
+            $this->_dateUntil = date('Y-m-d', strtotime($this->_dateFrom . ' +' . $this->_nights . ' days'));
+        }
 
-	public function getDateUntil() {
-		return $this->_dateUntil;
-	}
+        return $this;
+    }
 
-	public function setNights($nights=1) {
-		$this->_nights = max(1,$nights);
-		if($this->_dateFrom) {
-			$this->_dateUntil = date('Y-m-d',strtotime($this->_dateFrom.' +'.$this->_nights.' days'));
-		}
-		return $this;
-	}
+    public function getDateFrom()
+    {
+        return $this->_dateFrom;
+    }
 
-	public function getNights() {
-		return $this->_nights;
-	}
+    /**
+     * @param $date
+     *
+     * @return $this
+     * @throws Exception
+     */
+    public function setDateUntil($date)
+    {
+        if (!$this->_dateFrom) {
+            throw new Exception("Arrival date must be set when using departure date!");
+        }
+        $this->_dateUntil = $date;
+        $d1 = new DateTime($this->_dateFrom);
+        $d2 = new DateTime($this->_dateUntil);
+        $d = $d1->diff($d2);
+        $this->setNights(abs($d->days));
 
-	public function setCategories($categories) {
-		$this->_categories = [];
-		if(!is_array($categories)) $categories = func_get_args();
-		foreach($categories as $c) {
-			$this->_categories[] = CategoryEnum::fromFloat($c);
-		}
-		return $this;
-	}
+        return $this;
+    }
 
-	public function getCategories() {
-		return $this->_categories;
-	}
+    /**
+     * @return null
+     */
+    public function getDateUntil()
+    {
+        return $this->_dateUntil;
+    }
 
-	public function setApartments($allow=true) {
-		$this->_apartments = $allow?'true':'false';
-		return $this;
-	}
+    /**
+     * @param int $nights
+     *
+     * @return $this
+     */
+    public function setNights($nights = 1)
+    {
+        $this->_nights = max(1, $nights);
+        if ($this->_dateFrom) {
+            $this->_dateUntil = date('Y-m-d', strtotime($this->_dateFrom . ' +' . $this->_nights . ' days'));
+        }
 
-	public function getApartments() {
-		return $this->_apartments=='true';
-	}
+        return $this;
+    }
 
-	public function setHotelCode($hotelCode) {
-		$this->_hotelCode = $hotelCode;
-		return $this;
-	}
+    public function getNights()
+    {
+        return $this->_nights;
+    }
 
-	public function getHotelCode() {
-		return $this->_hotelCode?:null;
-	}
+    public function setCategories($categories)
+    {
+        $this->_categories = [];
+        if (!is_array($categories)) {
+            $categories = func_get_args();
+        }
+        foreach ($categories as $c) {
+            $this->_categories[] = CategoryEnum::fromFloat($c);
+        }
 
-	public function addRoom($adults=2, $children=0, $infant=false) {
-		if(count($this->_rooms)>=Room::ROOM_COUNT_MAX) throw new Exception("Max allowed rooms: ".Room::ROOM_COUNT_MAX);
-		$this->_rooms[] = [
-			'adults' => $adults,
-			'children' => $children,
-			'infant' => $infant?1:0,
-		];
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function getLastRoomIndex() {
-		$c = count($this->_rooms);
-		return $c-1;
-	}
+    public function getCategories()
+    {
+        return $this->_categories;
+    }
 
-	public function getRooms() {
-		return $this->_rooms;
-	}
+    public function setApartments($allow = true)
+    {
+        $this->_apartments = $allow ? 'true' : 'false';
 
-	public function clearRooms() {
-		$this->_rooms = [];
-	}
+        return $this;
+    }
 
-	public function getAdultCount() {
-		$c = 0;
-		foreach($this->_rooms as $r) $c+=$r['adults'];
-		return $c;
-	}
+    public function getApartments()
+    {
+        return $this->_apartments == 'true';
+    }
 
-	public function getChildrenCount() {
-		$c = 0;
-		foreach($this->_rooms as $r) $c+=$r['children'];
-		return $c;
-	}
+    public function setHotelCode($hotelCode)
+    {
+        $this->_hotelCode = $hotelCode;
 
-	public function getHash() {
-		$s = 'c:'.$this->_city.';';
-		$s.= 'f:'.$this->_dateFrom.';';
-		$s.= 'n:'.$this->_nights.';';
-		$s.= 'a:'.$this->_apartments.';';
-		foreach($this->_rooms as $r) {
-			foreach($r as $rk=>$rv) {
-				$s.= 'r'.$rk.':'.$rk.$rv.';';
-			}
-		}
-		return sha1($s);
-	}
+        return $this;
+    }
 
-	public function getBody() {
-		if($this->_city<1 && $this->_hotelCode<1) throw new Exception("CityCode or HotelId must be specified!");
-		if($this->_dateFrom<1) throw new Exception("ArrivalDate must be specified!");
-		if($this->_nights<1) throw new Exception("Nights must be specified!");
-		if(count($this->_rooms)<1) throw new Exception("At least one room must be specified!");
-		$xml = "";
-		$xml.= Helper::wrapTag("MaximumWaitTime",$this->getService()->getTimeout());
-		$xml.= Helper::wrapTag("MaxResponses",$this->getService()->getMaxResult());
-		if($this->getCity()>0) $xml.= Helper::wrapTag("CityCode",$this->getCity());
-		if($this->getHotelCode()>0) $xml.= Helper::wrapTag('Hotels', Helper::wrapTag('HotelId',$this->getHotelCode()));
-		$xml.= Helper::wrapTag("ArrivalDate",$this->getDateFrom());
-		$xml.= Helper::wrapTag("Nights",intval($this->getNights()));
-		$xml.= Helper::wrapTag('Apartments',$this->getApartments()?'true':'false');
-		if($this->getSort()) $xml.= Helper::wrapTag("SortOrder",intval($this->getSort()));
-		$rooms = '';
-		foreach($this->getRooms() as $r) {
-			$children = '';
-			for($c=0; $c<$r['children']; $c++) $children.= Helper::wrapTag('ChildAge', Room::CHILD_AGE);
-			$rooms.= Helper::wrapTag('Room',$children,['RoomCount'=>1,'Adults'=>$r['adults'],'CotCount'=>$r['infant']]);
-		}
-		$xml.= Helper::wrapTag('Rooms', $rooms);
-		return $xml;
-	}
+    public function getHotelCode()
+    {
+        return $this->_hotelCode ?: null;
+    }
 
-	/**
-	 * @return \GoGlobal\Response\HotelSearch
-	 */
-	public function getResponse() {
-		return parent::getResponse();
-	}
+    /**
+     * @param int $adults
+     * @param int $children
+     * @param bool $infant
+     *
+     * @return $this
+     * @throws Exception
+     */
+    public function addRoom($adults = 2, $children = 0, $infant = false)
+    {
+        if (count($this->_rooms) >= Room::ROOM_COUNT_MAX) {
+            throw new Exception("Max allowed rooms: " . Room::ROOM_COUNT_MAX);
+        }
+        $this->_rooms[] = [
+            'adults' => $adults,
+            'children' => $children,
+            'infant' => $infant ? 1 : 0,
+        ];
+
+        return $this;
+    }
+
+    protected function getLastRoomIndex()
+    {
+        $c = count($this->_rooms);
+
+        return $c - 1;
+    }
+
+    public function getRooms()
+    {
+        return $this->_rooms;
+    }
+
+    public function clearRooms()
+    {
+        $this->_rooms = [];
+    }
+
+    public function getAdultCount()
+    {
+        $c = 0;
+        foreach ($this->_rooms as $r) {
+            $c += $r['adults'];
+        }
+
+        return $c;
+    }
+
+    public function getChildrenCount()
+    {
+        $c = 0;
+        foreach ($this->_rooms as $r) {
+            $c += $r['children'];
+        }
+
+        return $c;
+    }
+
+    public function getHash()
+    {
+        $s = 'c:' . $this->_city . ';';
+        $s .= 'f:' . $this->_dateFrom . ';';
+        $s .= 'n:' . $this->_nights . ';';
+        $s .= 'a:' . $this->_apartments . ';';
+        foreach ($this->_rooms as $r) {
+            foreach ($r as $rk => $rv) {
+                $s .= 'r' . $rk . ':' . $rk . $rv . ';';
+            }
+        }
+
+        return sha1($s);
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    public function getBody()
+    {
+        if ($this->_city < 1 && $this->_hotelCode < 1) {
+            throw new Exception("CityCode or HotelId must be specified!");
+        }
+        if ($this->_dateFrom < 1) {
+            throw new Exception("ArrivalDate must be specified!");
+        }
+        if ($this->_nights < 1) {
+            throw new Exception("Nights must be specified!");
+        }
+        if (count($this->_rooms) < 1) {
+            throw new Exception("At least one room must be specified!");
+        }
+        $xml = "";
+        $xml .= Helper::wrapTag("MaximumWaitTime", $this->getService()->getTimeout());
+        $xml .= Helper::wrapTag("MaxResponses", $this->getService()->getMaxResult());
+        if ($this->getCity() > 0) {
+            $xml .= Helper::wrapTag("CityCode", $this->getCity());
+        }
+        if ($this->getHotelCode() > 0) {
+            $xml .= Helper::wrapTag('Hotels', Helper::wrapTag('HotelId', $this->getHotelCode()));
+        }
+        $xml .= Helper::wrapTag("ArrivalDate", $this->getDateFrom());
+        $xml .= Helper::wrapTag("Nights", intval($this->getNights()));
+        $xml .= Helper::wrapTag('Apartments', $this->getApartments() ? 'true' : 'false');
+        if ($this->getSort()) {
+            $xml .= Helper::wrapTag("SortOrder", intval($this->getSort()));
+        }
+        $rooms = '';
+        foreach ($this->getRooms() as $r) {
+            $children = '';
+            for ($c = 0; $c < $r['children']; $c++) {
+                $children .= Helper::wrapTag('ChildAge', Room::CHILD_AGE);
+            }
+            $rooms .= Helper::wrapTag('Room', $children, ['RoomCount' => 1, 'Adults' => $r['adults'], 'CotCount' => $r['infant']]);
+        }
+        $xml .= Helper::wrapTag('Rooms', $rooms);
+
+        return $xml;
+    }
+
+    /**
+     * @return \GoGlobal\ResponseInterface
+     */
+    public function getResponse()
+    {
+        return parent::getResponse();
+    }
 
     public function toArray()
     {

@@ -1,5 +1,5 @@
 {
-  "name": "lajosbencz/php-goglobalapi",
+  "name": "vikilaboy/php-goglobalapi",
   "description": "PHP implementation of GoGlobal API",
   "minimum-stability": "stable",
   "license": "MIT",
@@ -11,10 +11,14 @@
     {
       "name": "Tamas Havasi",
       "email": "tamas.havasi@bonic.hu"
-    }
+    },
+    {
+      "name": "El Niño",
+      "email": "viktorash@gmail.com"
+    },
   ],
   "require": {
-    "php": ">=5.4, <7",
+    "php": ">=5.4",
     "psr/log": "*"
   },
   "autoload": {
