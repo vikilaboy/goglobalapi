@@ -15,7 +15,7 @@
     {
       "name": "El Niño",
       "email": "viktorash@gmail.com"
-    },
+    }
   ],
   "require": {
     "php": ">=5.4",
