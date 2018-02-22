@@ -1,7 +1,6 @@
 {
   "name": "vikilaboy/php-goglobalapi",
   "description": "PHP implementation of GoGlobal API",
-  "minimum-stability": "stable",
   "license": "MIT",
   "authors": [
     {
@@ -20,6 +19,8 @@
   "require": {
     "php": ">=5.4",
     "psr/log": "*"
+  },
+  "require-dev": {
   },
   "autoload": {
     "psr-4": {
